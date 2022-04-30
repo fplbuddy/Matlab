@@ -1,0 +1,87 @@
+load('/Volumes/Samsung_T5/OldData/WNLZero.mat')
+addpath('/Users/philipwinchester/Dropbox/Matlab/WNL/Functions')
+addpath('/Users/philipwinchester/Dropbox/Matlab/Eigs_Solver/PrActuallyZero/Functions')
+addpath('/Users/philipwinchester/Dropbox/Matlab/Eigs_Solver/PrZero/Functions')
+addpath('/Users/philipwinchester/Dropbox/Matlab/Eigs_Solver/ForCluster/Functions')
+%% compare to solver
+G  = 2;
+GS = GtoGS(G);
+eps = 0.1;
+epsS = epstoepsS(eps);
+t = WNLZero.(GS).(epsS).t;
+theta = WNLZero.(GS).(epsS).theta;
+phi = WNLZero.(GS).(epsS).phi;
+TF = islocalmin(phi);
+phimin = phi(TF);
+
+%%
+phi1 = phimin(1)*eps^2;
+A_list = WNLZero.(GS).As;
+sigma_list = WNLZero.(GS).sigmas;
+lambda_list = abs(imag(WNLZero.(GS).Fs)); % abs as i have got the signs wrong in how I constricted the ODEs
+[~,I] = min(abs(sigma_list));
+Astar = A_list(I);
+SigDivA = @(A) interp1(A_list,sigma_list,A)./A;
+SigDivlam = @(A) interp1(A_list,sigma_list,A)./interp1(A_list,lambda_list,A);
+% Get A0
+d = 1;
+A0 = Astar*1.1;
+while d > 1e-15
+    A0old = A0;
+    A0 = GetA0(Astar,A_list,sigma_list,A0,phi1,SigDivA);
+    d = abs(A0old-A0);
+end
+% Get Ac
+d = 1;
+Ac = Astar*0.5;
+while d > 1e-15
+    Acold = Ac;
+    Ac = GetAc(A0,Ac,SigDivlam);
+    d = abs(Acold-Ac);
+end
+% calculate phi2
+phi2 = integral(@(A) SigDivA(A), Ac, Astar);
+
+phi_list = [phi1 phi2];
+A0_list = [A0];
+Ac_list = [Ac];
+for i=1:3
+    [Ac,A0,phi2] = getNext(phi2,A0,Ac/10,Astar,A_list,sigma_list,SigDivA,SigDivlam);
+    phi_list = [phi_list phi2];
+    A0_list = [A0_list A0];
+    Ac_list = [Ac_list Ac];
+end
+
+
+%% functions
+function A0 = GetA0(Astar,A_list,sigma_list,A0,phi1,SigDivA)
+    % Does one NR for A0
+    A0 = A0*(1-(integral(@(A) SigDivA(A), Astar, A0)+phi1)/interp1(A_list,sigma_list,A0));
+end
+
+function Ac = GetAc(A0,Ac,SigDivlam)
+    % Does one NR for Ac
+    Ac = Ac + integral(@(A) SigDivlam(A), Ac, A0)/SigDivlam(Ac);
+end
+
+function [Ac,A0,phinext] = getNext(phi,A0,Ac,Astar,A_list,sigma_list,SigDivA,SigDivlam)
+% Get A0
+d = 1;
+while d > 2e-15
+    A0old = A0;
+    A0 = GetA0(Astar,A_list,sigma_list,A0,phi,SigDivA);
+    d = abs(A0old-A0);
+end
+% Get Ac
+d = 1;
+while d > 2e-15
+    Acold = Ac;
+    Ac = GetAc(A0,Ac,SigDivlam);
+    d = abs(Acold-Ac);
+end
+% calculate phi2
+phinext = integral(@(A) SigDivA(A), Ac, Astar);   
+
+end
+
+

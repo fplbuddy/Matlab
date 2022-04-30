@@ -1,0 +1,68 @@
+clearvars -except AllData
+run SetUp.m
+
+Ra = 1e8; RaS = RatoRaS(Ra); RaT = RatoRaT(Ra);
+Pr_list = [1e-1 3e-2 1e-2 1e-3];
+G = 1; ARS = ['AR_' num2str(G)];
+%% find which one has the smallest time
+tmin = 1e15;
+for i=1:length(Pr_list)
+    Pr = Pr_list(i);
+    PrS = PrtoPrS(Pr);
+    kenergy = importdata([convertStringsToChars(AllData.(ARS).(PrS).(RaS).path) '/Checks/kenergy.txt']);
+    ICT = AllData.(ARS).(PrS).(RaS).ICT;
+    t = kenergy(:,1);
+    t = t(ICT:end);
+    tmin = min([tmin t(end)-t(1)]);
+end
+%% Make even kinetic energy plot
+figure('Renderer', 'painters', 'Position', [5 5 600 200])
+for i=1:length(Pr_list)
+    Pr = Pr_list(i);
+    PrS = PrtoPrS(Pr);
+    PrT = RatoRaT(Pr);
+    kenergy = importdata([convertStringsToChars(AllData.(ARS).(PrS).(RaS).path) '/Checks/kenergy.txt']);
+    ICT = AllData.(ARS).(PrS).(RaS).ICT;
+    t = kenergy(:,1); EE = kenergy(:,5);
+    % find which position we wanna go from
+    tcheck = abs(t - t(end) + tmin); [~,ICT] = min(tcheck);
+    t = t(ICT:end); t = t - t(1);
+    EE = EE(ICT:end);
+    semilogy(t,EE,'DisplayName',['$' PrT '$']), hold on
+end
+xlim([0 tmin])
+ax = gca;
+ax.XAxis.FontSize = numFS;
+ax.YAxis.FontSize = numFS;
+xlabel('$t$ $(s)$','FontSize',numFS);
+ylabel('Even Kinetic Enery','FontSize',numFS);
+title(['$ Ra = ' RatoRaT(Ra) '$, $\Gamma = ' num2str(G) '$'],'FontSize',labelFS)
+lgnd = legend('Location', 'Bestoutside', 'FontSize', numFS); title(lgnd,'$Pr$', 'FontSize', numFS)
+saveas(gcf,[figpath 'EvenKineticE_' convertStringsToChars(RaS) '_G_' num2str(G) '.eps'], 'epsc')
+
+%% Make odd kinetic energy plot
+figure('Renderer', 'painters', 'Position', [5 5 600 200])
+for i=1:length(Pr_list)
+    Pr = Pr_list(i);
+    PrS = PrtoPrS(Pr);
+    PrT = RatoRaT(Pr);
+    kenergy = importdata([convertStringsToChars(AllData.(ARS).(PrS).(RaS).path) '/Checks/kenergy.txt']);
+    ICT = AllData.(ARS).(PrS).(RaS).ICT;
+    t = kenergy(:,1); EE = kenergy(:,5);
+    % find which position we wanna go from
+    tcheck = abs(t - t(end) + tmin); [~,ICT] = min(tcheck);
+    t = t(ICT:end); t = t - t(1);
+    EE = EE(ICT:end);
+    semilogy(t,EE,'DisplayName',['$' PrT '$']), hold on
+end
+xlim([0 tmin])
+ax = gca;
+ax.XAxis.FontSize = numFS;
+ax.YAxis.FontSize = numFS;
+xlabel('$t$ $(s)$','FontSize',numFS);
+ylabel('Even Kinetic Enery','FontSize',numFS);
+title(['$ Ra = ' RatoRaT(Ra) '$, $\Gamma = ' num2str(G) '$'],'FontSize',labelFS)
+lgnd = legend('Location', 'Bestoutside', 'FontSize', numFS); title(lgnd,'$Pr$', 'FontSize', numFS)
+saveas(gcf,[figpath 'EveKineticE_' convertStringsToChars(RaS) '_G_' num2str(G) '.eps'], 'epsc')
+
+

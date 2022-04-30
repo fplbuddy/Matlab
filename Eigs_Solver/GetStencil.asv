@@ -1,0 +1,327 @@
+N = 64;
+G = 2;
+n = [(-N/2):2:(N/2-1) (-N/2+1):2:(N/2-1)]; n = repmat(n, N/2);  n = n(1,:); 
+m = 1:N; m = repelem(   m, N/2);
+
+% for i=1:length(n)
+%     i
+%     ninst = n(i); minst = m(i);
+%     OnesWeWant1 = checkoeonenew(ninst, minst, N);
+%     OnesWeWant2 = checkoetwonew(ninst, minst, N);
+%     OnesWeWant3 = checkoethreenew(ninst, minst, N);
+%     OnesWeWantComb = [OnesWeWant1; OnesWeWant2; OnesWeWant3];
+%     OnesWeWantCheck = checkoe(ninst, minst, N);
+%     if length(OnesWeWantComb) == length(OnesWeWantCheck)
+%         for j=1:length(OnesWeWantComb)
+%             rowcomb = OnesWeWantComb(j,:);
+%             check = 0;
+%             k = 0;
+%             while check == 0
+%                 k = k +1;
+%                 rowcheck = OnesWeWantCheck(k,:);
+%                 
+%                 if rowcomb == rowcheck
+%                     check = 1;
+%                 end
+%                 
+%             end
+%         end
+%     else
+%         'lenght are not the same'
+%     end
+% end
+
+
+%%
+Stencil1psi1 = zeros((N^2/2),(N^2/2));
+Stencil1psi2andtheta1 = zeros((N^2/2),(N^2/2)); % Remember it is negative for theta
+Stencil2psi1 = zeros((N^2/2),(N^2/2));
+Stencil2psi2andtheta1 = zeros((N^2/2),(N^2/2)); % Remember it is negative for theta
+Stencil3psi1 = zeros((N^2/2),(N^2/2));
+Stencil3psi2andtheta1 = zeros((N^2/2),(N^2/2)); % Remember it is negative for theta
+FactorWeWant1 = zeros((N^2/2),(N^2/2));
+FactorReshuffle1 = ones((N^2/2),(N^2/2))*(N/2)*(N^2/2)+1; % This mode is always zero, m = -N/2
+FactorWeWant2 = zeros((N^2/2),(N^2/2));
+FactorReshuffle2 = FactorReshuffle1;
+FactorWeWant3 = zeros((N^2/2),(N^2/2));
+FactorReshuffle3 = FactorReshuffle1;
+tic
+for i=1:length(n)
+    ninst = n(i); minst = m(i);
+    OnesWeWant1 = checkoeonenew(ninst, minst, N);
+    OnesWeWant2 = checkoetwonew(ninst, minst, N);
+    OnesWeWant3 = checkoethreenew(ninst, minst, N);
+    
+    
+    for j=1:height(OnesWeWant1)
+        modes = OnesWeWant1(j,:);
+        nodd = modes(1); modd = modes(2); neven = modes(3); meven = modes(4);
+        %if abs(neven) < N/2 % as we do not have this in the steady state.
+        %will just add a 0 in the PsiE and ThetaE after we expand
+        columninst = columnfindnew(N, nodd, modd);
+        steadypos = steadypositionnew(N, neven, meven);
+
+        AFact = A(nodd, modd, neven, meven,G, minst);
+         
+         % Adding to stencils
+         Stencil1psi1(i,columninst) = (Square(nodd,modd,G) - Square(neven,meven,G))*AFact;
+         Stencil1psi2andtheta1(i,columninst) = AFact;
+         % Adding to Factors
+         FactorWeWant1(i, steadypos) = 1;
+         FactorReshuffle1(i, columninst) = (steadypos-1)*(N^2/2)+i;
+    end
+    for j=1:height(OnesWeWant2)
+        modes = OnesWeWant2(j,:);
+        nodd = modes(1); modd = modes(2); neven = modes(3); meven = modes(4);
+        %if abs(neven) < N/2 % as we do not have this in the steady state
+        columninst = columnfindnew(N, nodd, modd);
+        steadypos = steadypositionnew(N, neven, meven);
+
+        AFact = A(nodd, modd, neven, meven,G, minst);
+         
+         % Adding to psi1
+         Stencil2psi1(i,columninst) = (Square(nodd,modd,G) - Square(neven,meven,G))*AFact;
+         % Adding psi2
+         Stencil2psi2andtheta1(i,columninst) = AFact;
+         % Adding to Factors
+         FactorWeWant2(i, steadypos) = 1;
+         FactorReshuffle2(i, columninst) = (steadypos-1)*(N^2/2)+i;
+
+    end
+    for j=1:height(OnesWeWant3)
+        modes = OnesWeWant3(j,:);
+        nodd = modes(1); modd = modes(2); neven = modes(3); meven = modes(4);
+        %if abs(neven) < N/2 % as we do not have this in the steady state
+        columninst = columnfindnew(N, nodd, modd);
+        steadypos = steadypositionnew(N, neven, meven);
+
+        AFact = A(nodd, modd, neven, meven,G, minst);
+         
+         % Stencil
+         Stencil3psi1(i,columninst) = (Square(nodd,modd,G) - Square(neven,meven,G))*AFact;
+         Stencil3psi2andtheta1(i,columninst) = AFact;
+         % Adding to Factors
+         FactorWeWant3(i, steadypos) = FactorWeWant3(i, steadypos) + 1;
+         FactorReshuffle3(i, columninst) = (steadypos-1)*(N^2/2)+i;
+
+    end
+    
+end
+% saving
+% save(['/Volumes/Samsung_T5/SomeStencils/' 'Stencil1psi1_' num2str(N)], 'Stencil1psi1')
+% save(['/Volumes/Samsung_T5/SomeStencils/' 'Stencil2psi1_' num2str(N)], 'Stencil2psi1')
+% save(['/Volumes/Samsung_T5/SomeStencils/' 'Stencil3psi1_' num2str(N)], 'Stencil3psi1')
+% save(['/Volumes/Samsung_T5/SomeStencils/' 'Stencil1psi2andtheta1_' num2str(N)], 'Stencil1psi2andtheta1')
+% save(['/Volumes/Samsung_T5/SomeStencils/' 'Stencil2psi2andtheta1_' num2str(N)], 'Stencil2psi2andtheta1')
+% save(['/Volumes/Samsung_T5/SomeStencils/' 'Stencil3psi2andtheta1_' num2str(N)], 'Stencil3psi2andtheta1')
+% save(['/Volumes/Samsung_T5/SomeStencils/' 'FactorWeWant1_' num2str(N)], 'FactorWeWant1')
+% save(['/Volumes/Samsung_T5/SomeStencils/' 'FactorWeWant2_' num2str(N)], 'FactorWeWant2')
+% save(['/Volumes/Samsung_T5/SomeStencils/' 'FactorWeWant3_' num2str(N)], 'FactorWeWant3')
+% save(['/Volumes/Samsung_T5/SomeStencils/' 'FactorReshuffle1_' num2str(N)], 'FactorReshuffle1')
+% save(['/Volumes/Samsung_T5/SomeStencils/' 'FactorReshuffle2_' num2str(N)], 'FactorReshuffle2')
+% save(['/Volumes/Samsung_T5/SomeStencils/' 'FactorReshuffle3_' num2str(N)], 'FactorReshuffle3')
+stencils.Stencil1psi1 = Stencil1psi1;
+stencils.Stencil2psi1 = Stencil2psi1;
+stencils.Stencil3psi1 = Stencil3psi1;
+stencils.Stencil1psi2andtheta1 = Stencil1psi2andtheta1;
+stencils.Stencil2psi2andtheta1 = Stencil2psi2andtheta1;
+stencils.Stencil3psi2andtheta1 = Stencil3psi2andtheta1;
+stencils.FactorWeWant1 = FactorWeWant1;
+stencils.FactorWeWant2 = FactorWeWant2;
+stencils.FactorWeWant3 = FactorWeWant3;
+stencils.FactorReshuffle1 = FactorReshuffle1;
+stencils.FactorReshuffle2 = FactorReshuffle2;
+stencils.FactorReshuffle3 = FactorReshuffle3;
+save(['/Volumes/Samsung_T5/SomeStencils/' 'N_' num2str(N)], 'stencils')
+
+%%
+
+function res = checkoeone(ninst, minst, N)
+% addapted to only look at when kxe + kxo = kx
+neven = [-(N/2-1):2:(N/2-1) -(N/2):2:(N/2-2)]; neven = repmat(neven, N/2); neven = neven(1,:); % We want the negative ones here also, they might not appear actually... they will!
+meven = 1:N; meven = repelem(meven, N/2);
+nodd = [-(N/2):2:(N/2-2) -(N/2-1):2:(N/2-1)]; nodd = repmat(nodd, N/2); nodd = nodd(1,:);
+modd = meven;
+res = [];
+for i=1:length(neven)
+    neveninst = neven(i); meveninst = meven(i);
+    for j=1:length(nodd)
+        noddinst = nodd(j); moddinst = modd(j);
+        if ninst == neveninst + noddinst && (minst == meveninst + moddinst)
+            s = size(res);
+            res(s(1)+1, 1) = noddinst; res(s(1)+1, 2) = moddinst; res(s(1)+1, 3) = neveninst; res(s(1)+1, 4) = meveninst;
+        end
+    end
+end
+end
+
+function res = checkoeonenew(ninst, minst, N)
+% addapted to only look at when kye + kyo = kx
+neven = [-(N/2-1):2:(N/2-1) -(N/2):2:(N/2-2)]; neven = repmat(neven, N/2); neven = neven(1,:); % We want the negative ones here also, they might not appear actually... they will!
+meven = 1:N; meven = repelem(meven, N/2);
+res = [zeros(N^2/2,2) reshape(neven, N^2/2,1) reshape(meven, N^2/2,1)];
+rem = [];
+for i=1:length(neven)
+    neveninst = res(i,3);
+    meveninst = res(i,4);
+    noddinst = ninst - neveninst;
+    moddinst = minst - meveninst;
+    if -N/2 <= noddinst && noddinst < N/2 && moddinst <= N && moddinst >= 1 
+        res(i,1) = noddinst;
+        res(i,2) = moddinst;
+    else
+        rem = [i rem];
+    end
+end
+res(rem,:) = [];
+end
+
+
+function res = checkoetwo(ninst, minst, N)
+% addapted to only look at when kxe - kxo = kx
+neven = [-(N/2-1):2:(N/2-1) -(N/2):2:(N/2-2)]; neven = repmat(neven, N/2); neven = neven(1,:); % We want the negative ones here also, they might not appear actually... they will!
+meven = 1:N; meven = repelem(meven, N/2);
+nodd = [-(N/2):2:(N/2-2) -(N/2-1):2:(N/2-1)]; nodd = repmat(nodd, N/2); nodd = nodd(1,:);
+modd = meven;
+res = [];
+for i=1:length(neven)
+    neveninst = neven(i); meveninst = meven(i);
+    for j=1:length(nodd)
+        noddinst = nodd(j); moddinst = modd(j);
+        if ninst == neveninst + noddinst && (minst == meveninst - moddinst)
+            s = size(res);
+            res(s(1)+1, 1) = noddinst; res(s(1)+1, 2) = moddinst; res(s(1)+1, 3) = neveninst; res(s(1)+1, 4) = meveninst;
+        end
+    end
+end
+end
+
+function res = checkoetwonew(ninst, minst, N)
+% addapted to only look at when kxe - kxo = kx
+neven = [-(N/2-1):2:(N/2-1) -(N/2):2:(N/2-2)]; neven = repmat(neven, N/2); neven = neven(1,:); % We want the negative ones here also, they might not appear actually... they will!
+meven = 1:N; meven = repelem(meven, N/2);
+res = [zeros(N^2/2,2) reshape(neven, N^2/2,1) reshape(meven, N^2/2,1)];
+rem = [];
+for i=1:length(neven)
+    neveninst = res(i,3);
+    meveninst = res(i,4);
+    noddinst = ninst - neveninst;
+    moddinst = - minst + meveninst;
+    if -N/2 <= noddinst && noddinst < N/2 && moddinst <= N && moddinst >= 1 
+        res(i,1) = noddinst;
+        res(i,2) = moddinst;
+    else
+        rem = [i rem];
+    end
+end
+res(rem,:) = [];
+end
+
+
+function res = checkoethree(ninst, minst, N)
+% addapted to only look at when  -kxe + kxo = kx
+neven = [-(N/2-1):2:(N/2-1) -(N/2):2:(N/2-2)]; neven = repmat(neven, N/2); neven = neven(1,:); % We want the negative ones here also, they might not appear actually... they will!
+meven = 1:N; meven = repelem(meven, N/2);
+nodd = [-(N/2):2:(N/2-2) -(N/2-1):2:(N/2-1)]; nodd = repmat(nodd, N/2); nodd = nodd(1,:);
+modd = meven;
+res = [];
+for i=1:length(neven)
+    neveninst = neven(i); meveninst = meven(i);
+    for j=1:length(nodd)
+        noddinst = nodd(j); moddinst = modd(j);
+        if ninst == neveninst + noddinst && (minst == -meveninst + moddinst)
+            s = size(res);
+            res(s(1)+1, 1) = noddinst; res(s(1)+1, 2) = moddinst; res(s(1)+1, 3) = neveninst; res(s(1)+1, 4) = meveninst;
+        end
+    end
+end
+end
+
+function res = checkoethreenew(ninst, minst, N)
+% addapted to only look at when -kxe + kxo = kx
+neven = [-(N/2-1):2:(N/2-1) -(N/2):2:(N/2-2)]; neven = repmat(neven, N/2); neven = neven(1,:); % We want the negative ones here also, they might not appear actually... they will!
+meven = 1:N; meven = repelem(meven, N/2);
+res = [zeros(N^2/2,2) reshape(neven, N^2/2,1) reshape(meven, N^2/2,1)];
+rem = [];
+for i=1:length(neven)
+    neveninst = res(i,3);
+    meveninst = res(i,4);
+    noddinst = ninst - neveninst;
+    moddinst = minst + meveninst;
+    if -N/2 <= noddinst && noddinst < N/2 && moddinst <= N && moddinst >= 1 
+        res(i,1) = noddinst;
+        res(i,2) = moddinst;
+    else
+        rem = [i rem];
+    end
+end
+res(rem,:) = [];
+end
+
+function pos = columnfindnew(N,ninst,minst)
+pos = (minst-1)*(N/2) + floor((N/2+ninst)/2)+1;
+end
+
+function pos = columnfind(N,ninst,minst)
+n = [(-N/2):2:(N/2-1) (-N/2+1):2:(N/2-1)]; n = repmat(n, N/2);  n = n(1,:);
+m = 1:N; m = repelem(m, N/2); m = m(1,:);
+for i=1:length(n)
+    ncheck = n(i); mcheck = m(i);
+    if ninst == ncheck && minst == mcheck
+        pos = i;
+    end
+end
+end
+
+function A = A(nodd, modd, neven, meven,G, minst)
+A = (pi^2*2/G)*(nodd*meven*f(meven, modd, minst)-modd*neven*f(modd, meven, minst));
+end
+
+function S = Square(ninst,minst,G)
+S = (ninst^2)*(2*pi/G)^2 + (minst*pi)^2;
+end
+
+function f = f(a,b,c)
+if a == b + c
+    f = -1;
+else
+    f = 1;
+end
+end
+
+function pos = steadypositioncheck(N, ninst, minst)
+n = [(-N/2+1):2:(N/2-1) (-N/2):2:(N/2-2)]; n = repmat(n, N/2); n = n(1,:);
+m = 1:N; m = repelem(m, N/2);
+for i=1:length(n)
+    ncheck = n(i); mcheck = m(i);
+    if ninst == ncheck && minst == mcheck
+        pos = i;
+    end
+end
+end
+
+function pos = steadypositionnew(N, ninst, minst)
+    pos = (minst-1)*(N/2) + floor((N/2+ninst)/2)+1;
+end
+
+function res = checkoe(ninst, minst, N)
+neven = [-(N/2-1):2:(N/2-1) -(N/2):2:(N/2-2)]; neven = repmat(neven, N/2); neven = neven(1,:); % We want the negative ones here also, they might not appear actually... they will!
+meven = 1:N; meven = repelem(meven, N/2);
+nodd = [-(N/2):2:(N/2-2) -(N/2-1):2:(N/2-1)]; nodd = repmat(nodd, N/2); nodd = nodd(1,:);
+modd = meven;
+res = [];
+for i=1:length(neven)
+    neveninst = neven(i); meveninst = meven(i);
+    for j=1:length(nodd)
+        noddinst = nodd(j); moddinst = modd(j);
+        if ninst == neveninst + noddinst && (minst == meveninst + moddinst || minst == abs(meveninst - moddinst))
+            s = size(res);
+            res(s(1)+1, 1) = noddinst; res(s(1)+1, 2) = moddinst; res(s(1)+1, 3) = neveninst; res(s(1)+1, 4) = meveninst;
+        end
+    end
+end
+end
+
+
+
+

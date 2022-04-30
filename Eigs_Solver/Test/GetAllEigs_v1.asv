@@ -1,0 +1,66 @@
+Treads = 1;
+maxNumCompThreads(Treads);
+maxNumCompThreads(Treads);
+% Adding the extra functions we want
+fpath = '/Users/philipwinchester/Dropbox/Matlab/Eigs_Solver/ForCluster/Functions/';
+addpath(fpath)
+% Loading in the old data
+dpath = '/Volumes/Samsung_T5/OldData/masternew.mat';
+spath = '';
+load(dpath);
+% constants
+N = 32;
+G = 2;
+AR = ['AR_' num2str(G)];
+type = ['OneOne' num2str(N)];
+Pr_list = [10 1 0.1 1e-2 1e-3 1e-4 1e-5 1e-6 1e-7];
+Ra_list = [1e4];
+WE = 0;
+WO = 0;
+tic
+for i=2:length(Pr_list)
+    Pr = Pr_list(i)
+    PrS = PrtoPrS(Pr);
+    for j = 1:length(Ra_list)
+        Ra = Ra_list(j)
+        RaS = RatoRaS(Ra);        
+        try ngot = not(isfield(Data.(AR).(type).(PrS), RaS)); catch, ngot = 1; end
+        if ngot % If we need to do NR or not
+            %[PsiE, ThetaE] = GetIC(Ra, Pr, NewData, AR, type);
+            PrB = Pr_list(i-1);
+            PrSB = PrtoPrS(PrB);
+            PsiE = Data.(AR).(type).(PrSB).(RaS).PsiE;
+            ThetaE = Data.(AR).(type).(PrSB).(RaS).ThetaE;
+            [PsiE, ThetaE, dxmin] = NR(PsiE, ThetaE, N, G, Ra, Pr);%, NL);
+            Data.(AR).(type).(PrS).(RaS).Ra = Ra;
+            Data.(AR).(type).(PrS).(RaS).Pr = Pr;
+            Data.(AR).(type).(PrS).(RaS).dxmin = dxmin;
+            Data.(AR).(type).(PrS).(RaS).PsiE = PsiE;
+            Data.(AR).(type).(PrS).(RaS).ThetaE = ThetaE; 
+            %save(spath,'NewData')
+        else
+            ThetaE = Data.(AR).(type).(PrS).(RaS).ThetaE;
+            PsiE = Data.(AR).(type).(PrS).(RaS).PsiE;
+        end
+        %temp.(AR).(type) = NewData.(AR).(type); % only keeps AR and type we are interested in
+        %NewData = temp;
+        if WO
+        % Solving odd problem
+        M = MakeMatrixForOddProblem(N,G, PsiE, ThetaE, Ra, Pr);
+        sigmaodd = eig(M);
+        clear M
+        NewData.(AR).(type).(PrS).(RaS).sigmaodd = sigmaodd;
+        save(spath,'NewData')
+        end
+        if WE
+        % Solve even problem
+        M = MakeMatrixForEvenProblem(N,G, PsiE,ThetaE, Ra, Pr);
+        sigmaeven = eig(M);
+        clear M
+        NewData.(AR).(type).(PrS).(RaS).sigmaeven = sigmaeven;
+        save(spath,'NewData')
+        end
+    end
+end
+toc
+%save(spath,'NewData')
