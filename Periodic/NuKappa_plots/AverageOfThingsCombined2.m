@@ -76,3 +76,4 @@ legend('Location','bestoutside');
 %saveas(gcf,[figpath 'PotentialEnergyBudgetPeriodic_' tit], 'epsc')
 
 %% play
+semilogx(Pr_list, data.pen,'.')

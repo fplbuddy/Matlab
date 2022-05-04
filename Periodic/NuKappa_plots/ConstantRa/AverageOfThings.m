@@ -1,16 +1,18 @@
 run /Users/philipwinchester/Dropbox/Matlab/GeneralFuncs/SetUp.m
-o1 = 4; o2 = 1;
+o1 = 1; o2 = 1;
 f = 0; hnu = 1; 
 fS = normaltoS(f, 'f',1); hnuS = normaltoS(hnu, 'hnu',1);
 o1S = normaltoS(o1, 'o1',1); o2S = normaltoS(o2, 'o2',1);
 %
-overtit = '$Ra = (2\pi)^{15}/(10^{-18})^2$';
+%overtit = '$Ra = (2\pi)^{15}/(10^{-18})^2$';
 tit = ['Ra_const_n_' num2str(o1)];
 %
-nu_list = [1e-18 3.16e-19 1e-19 3.16e-20 1e-20];
+%nu_list = [1e-18 3.16e-19 1e-19 3.16e-20 1e-20];
+nu_list = [2e-4 6.32e-5 2e-5 6.32e-6 2e-6];
 kappa_list = flip(nu_list,2);
-n = 2048;
-n_list = ones(length(nu_list),1)*n;
+%n = 2048;
+%n_list = ones(length(nu_list),1)*n;
+n_list = [4096*2 4096 4096 4096 4096];
 
 
 

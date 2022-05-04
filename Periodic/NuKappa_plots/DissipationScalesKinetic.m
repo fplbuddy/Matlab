@@ -1,12 +1,12 @@
 run SetUp.m
 %%
 o1 = 1; o2 = 1; 
-nu = 5e-3; kappa = 5e-4; f = 0; hnu = 1; 
+nu = 2e-5; kappa = 2e-5; f = 0; hnu = 1; 
 fS = normaltoS(f, 'f',1); hnuS = normaltoS(hnu, 'hnu',1);
 o1S = normaltoS(o1, 'o1',1); o2S = normaltoS(o2, 'o2',1);
 nuS = normaltoS(nu,'nu',1); kappaS = normaltoS(kappa,'kappa',1);
 run SetUp.m
-n = 1024;
+n = 1024*8;
 ns = ['n_' num2str(n)];
 path = AllData.(ns).(o1S).(o2S).(fS).(hnuS).(nuS).(kappaS).path;
 spath = [path '/Spectra/'];
@@ -125,7 +125,7 @@ nuS = convertStringsToChars(nuS);
 %saveas(gcf,[figpath 'VODisScales_' nuS], 'epsc')
 nuS = convertStringsToChars(nuS); kappaS = convertStringsToChars(kappaS);
 fS = convertStringsToChars(fS); hnuS = convertStringsToChars(kappaS);
-saveas(gcf,[figpath 'KSScales_' nuS '_' kappaS '_'  hnuS '_m_' num2str(o2)], 'epsc')
+%saveas(gcf,[figpath 'KSScales_' nuS '_' kappaS '_'  hnuS '_m_' num2str(o2)], 'epsc')
 
 
 

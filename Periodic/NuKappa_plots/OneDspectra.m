@@ -1,6 +1,6 @@
 run /Users/philipwinchester/Dropbox/Matlab/GeneralFuncs/SetUp.m
-o1 = 1; o2 = 0; 
-nu = 5e-5; kappa = 5e-3; f = 0; hnu = 0.7; 
+o1 = 1; o2 = 1; 
+nu = 2e-4; kappa = 2e-4; f = 0; hnu = 1; 
 fS = normaltoS(f, 'f',1); hnuS = normaltoS(hnu, 'hnu',1);
 nuS = normaltoS(nu,'nu',1); kappaS = normaltoS(kappa,'kappa',1);
 o1S= normaltoS(o1, 'o1',1); o2S = normaltoS(o2, 'o2',1);
@@ -79,7 +79,7 @@ nuS = convertStringsToChars(nuS); kappaS = convertStringsToChars(kappaS);
 fS = convertStringsToChars(fS); hnuS = convertStringsToChars(kappaS);
 %title('NV 3', 'FontSize',labelFS)
 ylim([1e-6 2])
-saveas(gcf,[figpath 'Spec_' nuS '_' kappaS '_'  hnuS], 'epsc')
+%saveas(gcf,[figpath 'Spec_' nuS '_' kappaS '_'  hnuS], 'epsc')
 
 
 
